@@ -306,7 +306,7 @@ void ofxImageSequence::preloadAllFrames()
 		
 		ofFile file = ofFile(filenames[i], ofFile::ReadOnly, true);
 		ofBuffer buffer = file.readToBuffer();
-		sequence[i].setFromPixels((unsigned short*)buffer.getData(), 512, 424, OF_IMAGE_GRAYSCALE);
+		sequence[i].setFromPixels((unsigned short*)buffer.getData(), setWidth, setHeight, OF_IMAGE_GRAYSCALE);
 
 		if (!sequence[i].size()) {
 			loadFailed[i] = true;
@@ -339,7 +339,7 @@ void ofxImageSequence::loadFrame(int imageIndex)
 	if(!sequence[imageIndex].isAllocated() && !loadFailed[imageIndex]){
 		ofFile file = ofFile(filenames[imageIndex], ofFile::ReadOnly, true);
 		ofBuffer buffer = file.readToBuffer();
-		sequence[imageIndex].setFromPixels((unsigned short*) buffer.getData(), 512, 424, OF_IMAGE_GRAYSCALE);
+		sequence[imageIndex].setFromPixels((unsigned short*) buffer.getData(), setWidth, setHeight, OF_IMAGE_GRAYSCALE);
 
 		if(!sequence[imageIndex].size()){
 			loadFailed[imageIndex] = true;
@@ -360,6 +360,12 @@ void ofxImageSequence::loadFrame(int imageIndex)
 float ofxImageSequence::getPercentAtFrameIndex(int index)
 {
 	return ofMap(index, 0, sequence.size()-1, 0, 1.0, true);
+}
+
+void ofxImageSequence::setSize(float w, float h)
+{
+	setWidth = w;
+	setHeight = h;
 }
 
 float ofxImageSequence::getWidth()
