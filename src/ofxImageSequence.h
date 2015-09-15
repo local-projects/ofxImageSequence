@@ -146,7 +146,7 @@ class ofxImageSequence : public ofBaseHasTexture {
   protected:
 	ofxImageSequenceLoader* threadLoader;
 
-	vector<ofPixels> sequence;
+	vector<ofShortPixels> sequence;
 	vector<string> filenames;
 	vector<bool> loadFailed;
 	int currentFrame;

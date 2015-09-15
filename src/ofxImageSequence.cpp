@@ -150,7 +150,7 @@ bool ofxImageSequence::loadSequence(string prefix, string filetype,  int startDi
 	for(int i = startDigit; i <= endDigit; i++){
 		sprintf(imagename, format.str().c_str(), i);
 		filenames.push_back(imagename);
-		sequence.push_back(ofPixels());
+		sequence.push_back(ofShortPixels());
 		loadFailed.push_back(false);
 	}
 	
@@ -235,7 +235,7 @@ bool ofxImageSequence::preloadAllFilenames()
 	for(int i = 0; i < numFiles; i++) {
 
         filenames.push_back(dir.getPath(i));
-		sequence.push_back(ofPixels());
+		sequence.push_back(ofShortPixels());
 		loadFailed.push_back(false);
     }
 	return true;
@@ -303,7 +303,12 @@ void ofxImageSequence::preloadAllFrames()
 			ofSleepMillis(15);
 		}
 		curLoadFrame = i;
-		if(!ofLoadImage(sequence[i], filenames[i])){
+		
+		ofFile file = ofFile(filenames[i], ofFile::ReadOnly, true);
+		ofBuffer buffer = file.readToBuffer();
+		sequence[i].setFromPixels((unsigned short*)buffer.getData(), 512, 424, OF_IMAGE_GRAYSCALE);
+
+		if (!sequence[i].size()) {
 			loadFailed[i] = true;
 			ofLogError("ofxImageSequence::loadFrame") << "Image failed to load: " << filenames[i];		
 		}
@@ -332,7 +337,11 @@ void ofxImageSequence::loadFrame(int imageIndex)
 	}
 
 	if(!sequence[imageIndex].isAllocated() && !loadFailed[imageIndex]){
-		if(!ofLoadImage(sequence[imageIndex], filenames[imageIndex])){
+		ofFile file = ofFile(filenames[imageIndex], ofFile::ReadOnly, true);
+		ofBuffer buffer = file.readToBuffer();
+		sequence[imageIndex].setFromPixels((unsigned short*) buffer.getData(), 512, 424, OF_IMAGE_GRAYSCALE);
+
+		if(!sequence[imageIndex].size()){
 			loadFailed[imageIndex] = true;
 			ofLogError("ofxImageSequence::loadFrame") << "Image failed to load: " << filenames[imageIndex];
 		}
