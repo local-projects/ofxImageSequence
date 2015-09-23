@@ -492,6 +492,16 @@ void ofxImageSequence::setFrameAtPercent(float percent)
 	setFrame(getFrameIndexAtPercent(percent));	
 }
 
+ofShortPixels& ofxImageSequence::getPixels()
+{
+	return sequence[currentFrame];
+}
+
+const ofShortPixels& ofxImageSequence::getPixels() const
+{
+	return sequence[currentFrame];
+}
+
 ofTexture& ofxImageSequence::getTexture()
 {
 	return texture;

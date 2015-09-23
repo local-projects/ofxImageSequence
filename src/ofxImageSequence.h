@@ -116,6 +116,8 @@ class ofxImageSequence : public ofBaseHasTexture {
 
 	OF_DEPRECATED_MSG("Use getTexture() instead.", ofTexture& getTextureReference());
 
+	virtual ofShortPixels& getPixels();
+	virtual const ofShortPixels& getPixels() const;
 	virtual ofTexture& getTexture();
 	virtual const ofTexture& getTexture() const;
 
