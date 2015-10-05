@@ -41,8 +41,12 @@ void ofApp::setup(){
 	//frame01.png 
 	//this creates a method call where the parameters
 	//prefix is frame, file type is png, from frame 1 to 11, 2 digits in the number
-	sequence.setSize(366, 243);
 	sequence.loadSequence("frame", "png", 1, 11, 2);
+	//For use with raw data, like Kinect depth. Specify
+	//the size & image type to be loaded manually.
+	//sequence.setSize(512, 424);
+	//sequence.setImageType(OF_IMAGE_GRAYSCALE);
+	//sequence.loadSequence("kinect");
 	sequence.preloadAllFrames();	//this way there is no stutter when loading frames
 	sequence.setFrameRate(10); //set to ten frames per second for Muybridge's horse.
 	

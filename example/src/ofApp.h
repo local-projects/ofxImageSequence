@@ -30,7 +30,8 @@ class ofApp : public ofBaseApp
 	void mouseReleased(int x, int y, int button);
 	void windowResized(int w, int h);
 	
-	ofxImageSequence sequence;
+	ofxImageSequence sequence;			// For use with ofPixels
+	//ofxShortImageSequence sequence;	// For use with ofShortPixels, e.g. Kinect depth data
 	ofImage background;
 	bool playing;
 };

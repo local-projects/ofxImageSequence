@@ -119,6 +119,9 @@ ofxImageSequence_<PixelType>::ofxImageSequence_()
 	currentFrame = 0;
 	maxFrames = 0;
 	curLoadFrame = 0;
+	setWidth = 0;
+	setHeight = 0;
+	imageType = OF_IMAGE_UNDEFINED;
 	//threadLoader = NULL;
 }
 
@@ -323,15 +326,26 @@ void ofxImageSequence_<PixelType>::preloadAllFrames()
 		}
 		curLoadFrame = i;
 		
-		PixelType tempPixels;
-		ofBuffer buffer = ofBufferFromFile(filenames[i]);
-		tempPixels.allocate(setWidth, setHeight, OF_IMAGE_GRAYSCALE);
-		memcpy(tempPixels.getData(), buffer.getData(), buffer.size());
-		sequence[i].setFromPixels(tempPixels.getData(), setWidth, setHeight, OF_IMAGE_GRAYSCALE);
+		// Try loading as binary data if manual params are set. Otherwise try FreeImage
+		bool bLoaded = false;
 
-		if (!sequence[i].size()) {
+		if (setWidth && setHeight && imageType != OF_IMAGE_UNDEFINED) {
+			ofBuffer buffer = ofBufferFromFile(filenames[i], true);
+
+			sequence[i].allocate(setWidth, setHeight, imageType);
+			memcpy(sequence[i].getData(), buffer.getData(), buffer.size());
+
+			bLoaded = sequence[i].size();
+		}
+
+		if (!bLoaded) {
+			bLoaded = ofLoadImage(sequence[i], filenames[i]);
+		}
+
+		if (!bLoaded) {
 			loadFailed[i] = true;
-			ofLogError("ofxImageSequence::loadFrame") << "Image failed to load: " << filenames[i];		
+			ofLogError("ofxImageSequence::loadFrame") << "Image failed to load: " << filenames[i];
+			ofLogError("ofxImageSequence::loadFrame") << "Try setSize() & setImageType() if loading RAW data";
 		}
 	}
 }
@@ -360,15 +374,27 @@ void ofxImageSequence_<PixelType>::loadFrame(int imageIndex)
 	}
 
 	if(!sequence[imageIndex].isAllocated() && !loadFailed[imageIndex]){
-		PixelType tempPixels;
-		ofBuffer buffer = ofBufferFromFile(filenames[imageIndex]);
-		tempPixels.allocate(setWidth, setHeight, OF_IMAGE_GRAYSCALE);
-		memcpy(tempPixels.getData(), buffer.getData(), buffer.size());
-		sequence[imageIndex].setFromPixels(tempPixels.getData(), setWidth, setHeight, OF_IMAGE_GRAYSCALE);
 
-		if(!sequence[imageIndex].size()){
+		// Try loading as binary data if manual params are set. Otherwise try FreeImage
+		bool bLoaded = false;
+
+		if (setWidth && setHeight && imageType != OF_IMAGE_UNDEFINED) {
+			ofBuffer buffer = ofBufferFromFile(filenames[imageIndex], true);
+			
+			sequence[imageIndex].allocate(setWidth, setHeight, imageType);
+			memcpy(sequence[imageIndex].getData(), buffer.getData(), buffer.size());
+
+			bLoaded = sequence[imageIndex].size();
+		}
+
+		if (!bLoaded) {
+			bLoaded = ofLoadImage(sequence[imageIndex], filenames[imageIndex]);
+		}
+
+		if (!bLoaded) {
 			loadFailed[imageIndex] = true;
 			ofLogError("ofxImageSequence::loadFrame") << "Image failed to load: " << filenames[imageIndex];
+			ofLogError("ofxImageSequence::loadFrame") << "Try setSize() & setImageType() if loading RAW data";
 		}
 	}
 
@@ -393,6 +419,12 @@ void ofxImageSequence_<PixelType>::setSize(float w, float h)
 {
 	setWidth = w;
 	setHeight = h;
+}
+
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::setImageType(ofImageType type)
+{
+	imageType = type;
 }
 
 template<typename PixelType>

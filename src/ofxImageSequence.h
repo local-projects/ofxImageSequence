@@ -134,6 +134,7 @@ class ofxImageSequence_ : public ofBaseHasTexture {
 	float getLengthInSeconds();				//returns the sequence duration based on frame rate
 	
 	void setSize(float width, float height);
+	void setImageType(ofImageType type);
 	float getWidth();						//returns the width/height of the sequence
 	float getHeight();
 	bool isLoaded();						//returns true if the sequence has been loaded
@@ -168,6 +169,7 @@ class ofxImageSequence_ : public ofBaseHasTexture {
 	float setWidth, setHeight;
 	int lastFrameLoaded;
 	float frameRate;
+	ofImageType imageType;
 	
 	int minFilter;
 	int magFilter;
