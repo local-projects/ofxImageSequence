@@ -43,6 +43,7 @@
 
 #include "ofxImageSequence.h"
 
+/*
 class ofxImageSequenceLoader : public ofThread
 {
   public:
@@ -106,8 +107,10 @@ class ofxImageSequenceLoader : public ofThread
 	}
 
 };
+*/
 
-ofxImageSequence::ofxImageSequence()
+template<typename PixelType>
+ofxImageSequence_<PixelType>::ofxImageSequence_()
 {
 	loaded = false;
 	useThread = false;
@@ -116,20 +119,23 @@ ofxImageSequence::ofxImageSequence()
 	currentFrame = 0;
 	maxFrames = 0;
 	curLoadFrame = 0;
-	threadLoader = NULL;
+	//threadLoader = NULL;
 }
 
-ofxImageSequence::~ofxImageSequence()
+template<typename PixelType>
+ofxImageSequence_<PixelType>::~ofxImageSequence_()
 {
 	unloadSequence();
 }
 
-bool ofxImageSequence::loadSequence(string prefix, string filetype,  int startDigit, int endDigit)
+template<typename PixelType>
+bool ofxImageSequence_<PixelType>::loadSequence(string prefix, string filetype,  int startDigit, int endDigit)
 {
 	return loadSequence(prefix, filetype, startDigit, endDigit, 0);
 }
 
-bool ofxImageSequence::loadSequence(string prefix, string filetype,  int startDigit, int endDigit, int numDigits)
+template<typename PixelType>
+bool ofxImageSequence_<PixelType>::loadSequence(string prefix, string filetype,  int startDigit, int endDigit, int numDigits)
 {
 	unloadSequence();
 
@@ -150,7 +156,7 @@ bool ofxImageSequence::loadSequence(string prefix, string filetype,  int startDi
 	for(int i = startDigit; i <= endDigit; i++){
 		sprintf(imagename, format.str().c_str(), i);
 		filenames.push_back(imagename);
-		sequence.push_back(ofShortPixels());
+		sequence.push_back(PixelType());
 		loadFailed.push_back(false);
 	}
 	
@@ -164,14 +170,15 @@ bool ofxImageSequence::loadSequence(string prefix, string filetype,  int startDi
 	return true;
 }
 
-bool ofxImageSequence::loadSequence(string _folder)
+template<typename PixelType>
+bool ofxImageSequence_<PixelType>::loadSequence(string _folder)
 {
 	unloadSequence();
 
 	folderToLoad = _folder;
 
 	if(useThread){
-		threadLoader = new ofxImageSequenceLoader(this);
+		//threadLoader = new ofxImageSequenceLoader(this);
 		return true;
 	}
 
@@ -184,7 +191,8 @@ bool ofxImageSequence::loadSequence(string _folder)
 
 }
 
-void ofxImageSequence::completeLoading()
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::completeLoading()
 {
 
 	if(sequence.size() == 0){
@@ -201,7 +209,8 @@ void ofxImageSequence::completeLoading()
 
 }
 
-bool ofxImageSequence::preloadAllFilenames()
+template<typename PixelType>
+bool ofxImageSequence_<PixelType>::preloadAllFilenames()
 {
     ofDirectory dir;
 	if(extension != ""){
@@ -235,14 +244,15 @@ bool ofxImageSequence::preloadAllFilenames()
 	for(int i = 0; i < numFiles; i++) {
 
         filenames.push_back(dir.getPath(i));
-		sequence.push_back(ofShortPixels());
+		sequence.push_back(PixelType());
 		loadFailed.push_back(false);
     }
 	return true;
 }
 
 //set to limit the number of frames. negative means no limit
-void ofxImageSequence::setMaxFrames(int newMaxFrames)
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::setMaxFrames(int newMaxFrames)
 {
 	maxFrames = MAX(newMaxFrames, 0);
 	if(loaded){
@@ -250,12 +260,14 @@ void ofxImageSequence::setMaxFrames(int newMaxFrames)
 	}
 }
 
-void ofxImageSequence::setExtension(string ext)
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::setExtension(string ext)
 {
 	extension = ext;
 }
 
-void ofxImageSequence::enableThreadedLoad(bool enable){
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::enableThreadedLoad(bool enable){
 
 	if(loaded){
 		ofLogError("ofxImageSequence::enableThreadedLoad") << "Need to enable threaded loading before calling load";
@@ -263,24 +275,29 @@ void ofxImageSequence::enableThreadedLoad(bool enable){
 	useThread = enable;
 }
 
-void ofxImageSequence::cancelLoad()
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::cancelLoad()
 {
+	/*
 	if(useThread && threadLoader != NULL){
         threadLoader->cancel();
         
 		delete threadLoader;
 		threadLoader = NULL;
 	}
+	*/
 }
 
-void ofxImageSequence::setMinMagFilter(int newMinFilter, int newMagFilter)
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::setMinMagFilter(int newMinFilter, int newMagFilter)
 {
 	minFilter = newMinFilter;
 	magFilter = newMagFilter;
 	texture.setTextureMinMagFilter(minFilter, magFilter);
 }
 
-void ofxImageSequence::preloadAllFrames()
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::preloadAllFrames()
 {
 	if(sequence.size() == 0){
 		ofLogError("ofxImageSequence::loadFrame") << "Calling preloadAllFrames on unitialized image sequence.";
@@ -290,6 +307,7 @@ void ofxImageSequence::preloadAllFrames()
 	for(int i = 0; i < sequence.size(); i++){
 		//threaded stuff
 		if(useThread){
+			/*
 			if(threadLoader == NULL){
 				return;
 			}
@@ -299,14 +317,17 @@ void ofxImageSequence::preloadAllFrames()
             if(shouldExit){
                 return;
             }
+			*/
 
 			ofSleepMillis(15);
 		}
 		curLoadFrame = i;
 		
-		ofFile file = ofFile(filenames[i], ofFile::ReadOnly, true);
-		ofBuffer buffer = file.readToBuffer();
-		sequence[i].setFromPixels((unsigned short*)buffer.getData(), setWidth, setHeight, OF_IMAGE_GRAYSCALE);
+		PixelType tempPixels;
+		ofBuffer buffer = ofBufferFromFile(filenames[i]);
+		tempPixels.allocate(setWidth, setHeight, OF_IMAGE_GRAYSCALE);
+		memcpy(tempPixels.getData(), buffer.getData(), buffer.size());
+		sequence[i].setFromPixels(tempPixels.getData(), setWidth, setHeight, OF_IMAGE_GRAYSCALE);
 
 		if (!sequence[i].size()) {
 			loadFailed[i] = true;
@@ -315,7 +336,8 @@ void ofxImageSequence::preloadAllFrames()
 	}
 }
 
-float ofxImageSequence::percentLoaded(){
+template<typename PixelType>
+float ofxImageSequence_<PixelType>::percentLoaded(){
 	if(isLoaded()){
 		return 1.0;
 	}
@@ -325,7 +347,8 @@ float ofxImageSequence::percentLoaded(){
 	return 0.0;
 }
 
-void ofxImageSequence::loadFrame(int imageIndex)
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::loadFrame(int imageIndex)
 {
 	if(lastFrameLoaded == imageIndex){
 		return;
@@ -337,9 +360,11 @@ void ofxImageSequence::loadFrame(int imageIndex)
 	}
 
 	if(!sequence[imageIndex].isAllocated() && !loadFailed[imageIndex]){
-		ofFile file = ofFile(filenames[imageIndex], ofFile::ReadOnly, true);
-		ofBuffer buffer = file.readToBuffer();
-		sequence[imageIndex].setFromPixels((unsigned short*) buffer.getData(), setWidth, setHeight, OF_IMAGE_GRAYSCALE);
+		PixelType tempPixels;
+		ofBuffer buffer = ofBufferFromFile(filenames[imageIndex]);
+		tempPixels.allocate(setWidth, setHeight, OF_IMAGE_GRAYSCALE);
+		memcpy(tempPixels.getData(), buffer.getData(), buffer.size());
+		sequence[imageIndex].setFromPixels(tempPixels.getData(), setWidth, setHeight, OF_IMAGE_GRAYSCALE);
 
 		if(!sequence[imageIndex].size()){
 			loadFailed[imageIndex] = true;
@@ -357,33 +382,40 @@ void ofxImageSequence::loadFrame(int imageIndex)
 
 }
 
-float ofxImageSequence::getPercentAtFrameIndex(int index)
+template<typename PixelType>
+float ofxImageSequence_<PixelType>::getPercentAtFrameIndex(int index)
 {
 	return ofMap(index, 0, sequence.size()-1, 0, 1.0, true);
 }
 
-void ofxImageSequence::setSize(float w, float h)
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::setSize(float w, float h)
 {
 	setWidth = w;
 	setHeight = h;
 }
 
-float ofxImageSequence::getWidth()
+template<typename PixelType>
+float ofxImageSequence_<PixelType>::getWidth()
 {
 	return width;
 }
 
-float ofxImageSequence::getHeight()
+template<typename PixelType>
+float ofxImageSequence_<PixelType>::getHeight()
 {
 	return height;
 }
 
-void ofxImageSequence::unloadSequence()
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::unloadSequence()
 {
+	/*
 	if(threadLoader != NULL){
 		delete threadLoader;
 		threadLoader = NULL;
 	}
+	*/
 
 	sequence.clear();
 	filenames.clear();
@@ -398,12 +430,14 @@ void ofxImageSequence::unloadSequence()
 
 }
 
-void ofxImageSequence::setFrameRate(float rate)
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::setFrameRate(float rate)
 {
 	frameRate = rate;
 }
 
-string ofxImageSequence::getFilePath(int index){
+template<typename PixelType>
+string ofxImageSequence_<PixelType>::getFilePath(int index){
 	if(index > 0 && index < filenames.size()){
 		return filenames[index];
 	}
@@ -411,7 +445,8 @@ string ofxImageSequence::getFilePath(int index){
 	return "";
 }
 
-int ofxImageSequence::getFrameIndexAtPercent(float percent)
+template<typename PixelType>
+int ofxImageSequence_<PixelType>::getFrameIndexAtPercent(float percent)
 {
     if (percent < 0.0 || percent > 1.0) percent -= floor(percent);
 
@@ -419,50 +454,58 @@ int ofxImageSequence::getFrameIndexAtPercent(float percent)
 }
 
 //deprecated
-ofTexture& ofxImageSequence::getTextureReference()
+template<typename PixelType>
+ofTexture& ofxImageSequence_<PixelType>::getTextureReference()
 {
 	return getTexture();
 }
 
 //deprecated
-ofTexture* ofxImageSequence::getFrameAtPercent(float percent)
+template<typename PixelType>
+ofTexture* ofxImageSequence_<PixelType>::getFrameAtPercent(float percent)
 {
 	setFrameAtPercent(percent);
 	return &getTexture();
 }
 
 //deprecated
-ofTexture* ofxImageSequence::getFrameForTime(float time)
+template<typename PixelType>
+ofTexture* ofxImageSequence_<PixelType>::getFrameForTime(float time)
 {
 	setFrameForTime(time);
 	return &getTexture();
 }
 
 //deprecated
-ofTexture* ofxImageSequence::getFrame(int index)
+template<typename PixelType>
+ofTexture* ofxImageSequence_<PixelType>::getFrame(int index)
 {
 	setFrame(index);
 	return &getTexture();
 }
 
-ofTexture& ofxImageSequence::getTextureForFrame(int index)
+template<typename PixelType>
+ofTexture& ofxImageSequence_<PixelType>::getTextureForFrame(int index)
 {
 	setFrame(index);
 	return getTexture();
 }
 
-ofTexture& ofxImageSequence::getTextureForTime(float time)
+template<typename PixelType>
+ofTexture& ofxImageSequence_<PixelType>::getTextureForTime(float time)
 {
 	setFrameForTime(time);
 	return getTexture();
 }
 
-ofTexture& ofxImageSequence::getTextureForPercent(float percent){
+template<typename PixelType>
+ofTexture& ofxImageSequence_<PixelType>::getTextureForPercent(float percent){
 	setFrameAtPercent(percent);
 	return getTexture();
 }
 
-void ofxImageSequence::setFrame(int index)
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::setFrame(int index)
 {
 	if(!loaded){
 		ofLogError("ofxImageSequence::setFrame") << "Calling getFrame on unitialized image sequence.";
@@ -480,52 +523,67 @@ void ofxImageSequence::setFrame(int index)
 	currentFrame = index;
 }
 
-void ofxImageSequence::setFrameForTime(float time)
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::setFrameForTime(float time)
 {
 	float totalTime = sequence.size() / frameRate;
 	float percent = time / totalTime;
 	return setFrameAtPercent(percent);	
 }
 
-void ofxImageSequence::setFrameAtPercent(float percent)
+template<typename PixelType>
+void ofxImageSequence_<PixelType>::setFrameAtPercent(float percent)
 {
 	setFrame(getFrameIndexAtPercent(percent));	
 }
 
-ofShortPixels& ofxImageSequence::getPixels()
+template<typename PixelType>
+PixelType& ofxImageSequence_<PixelType>::getPixels()
 {
 	return sequence[currentFrame];
 }
 
-const ofShortPixels& ofxImageSequence::getPixels() const
+template<typename PixelType>
+const PixelType& ofxImageSequence_<PixelType>::getPixels() const
 {
 	return sequence[currentFrame];
 }
 
-ofTexture& ofxImageSequence::getTexture()
+template<typename PixelType>
+ofTexture& ofxImageSequence_<PixelType>::getTexture()
 {
 	return texture;
 }
 
-const ofTexture& ofxImageSequence::getTexture() const
+template<typename PixelType>
+const ofTexture& ofxImageSequence_<PixelType>::getTexture() const
 {
 	return texture;
 }
 
-float ofxImageSequence::getLengthInSeconds()
+template<typename PixelType>
+float ofxImageSequence_<PixelType>::getLengthInSeconds()
 {
 	return getTotalFrames() / frameRate;
 }
 
-int ofxImageSequence::getTotalFrames()
+template<typename PixelType>
+int ofxImageSequence_<PixelType>::getTotalFrames()
 {
 	return sequence.size();
 }
 
-bool ofxImageSequence::isLoaded(){						//returns true if the sequence has been loaded
+template<typename PixelType>
+bool ofxImageSequence_<PixelType>::isLoaded(){						//returns true if the sequence has been loaded
     return loaded;
 }
 
-bool ofxImageSequence::isLoading(){
-	return threadLoader != NULL && threadLoader->loading;
+template<typename PixelType>
+bool ofxImageSequence_<PixelType>::isLoading(){
+	//return threadLoader != NULL && threadLoader->loading;
+	return false;
 }
+
+template class ofxImageSequence_<ofPixels>;
+template class ofxImageSequence_<ofShortPixels>;
+template class ofxImageSequence_<ofFloatPixels>;

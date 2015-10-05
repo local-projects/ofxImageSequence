@@ -49,11 +49,13 @@
 #include "ofMain.h"
 
 class ofxImageSequenceLoader;
-class ofxImageSequence : public ofBaseHasTexture {
+
+template<typename PixelType>
+class ofxImageSequence_ : public ofBaseHasTexture {
   public:
 
-	ofxImageSequence();
-	~ofxImageSequence();
+	ofxImageSequence_();
+	~ofxImageSequence_();
 	
 	//sets an extension, like png or jpg
 	void setExtension(string prefix);
@@ -116,8 +118,8 @@ class ofxImageSequence : public ofBaseHasTexture {
 
 	OF_DEPRECATED_MSG("Use getTexture() instead.", ofTexture& getTextureReference());
 
-	virtual ofShortPixels& getPixels();
-	virtual const ofShortPixels& getPixels() const;
+	virtual PixelType& getPixels();
+	virtual const PixelType& getPixels() const;
 	virtual ofTexture& getTexture();
 	virtual const ofTexture& getTexture() const;
 
@@ -147,9 +149,9 @@ class ofxImageSequence : public ofBaseHasTexture {
 	float percentLoaded();
 
   protected:
-	ofxImageSequenceLoader* threadLoader;
+	//ofxImageSequenceLoader* threadLoader;
 
-	vector<ofShortPixels> sequence;
+	vector<PixelType> sequence;
 	vector<string> filenames;
 	vector<bool> loadFailed;
 	int currentFrame;
@@ -171,6 +173,6 @@ class ofxImageSequence : public ofBaseHasTexture {
 	int magFilter;
 };
 
-
-
-
+typedef ofxImageSequence_<ofPixels> ofxImageSequence;
+typedef ofxImageSequence_<ofShortPixels> ofxShortImageSequence;
+typedef ofxImageSequence_<ofFloatPixels> ofxFloatImageSequence;
