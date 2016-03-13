@@ -150,7 +150,7 @@ bool ofxImageSequence::loadSequence(string prefix, string filetype,  int startDi
 	for(int i = startDigit; i <= endDigit; i++){
 		sprintf(imagename, format.str().c_str(), i);
 		filenames.push_back(imagename);
-		sequence.push_back(ofPixels());
+		sequence.push_back(new ofTexture());
 		loadFailed.push_back(false);
 	}
 	
@@ -159,8 +159,8 @@ bool ofxImageSequence::loadSequence(string prefix, string filetype,  int startDi
 	lastFrameLoaded = -1;
 	loadFrame(0);
 	
-	width  = sequence[0].getWidth();
-	height = sequence[0].getHeight();
+	width  = sequence[0]->getWidth();
+	height = sequence[0]->getHeight();
 	return true;
 }
 
@@ -196,8 +196,8 @@ void ofxImageSequence::completeLoading()
 	lastFrameLoaded = -1;
 	loadFrame(0);
 	
-	width  = sequence[0].getWidth();
-	height = sequence[0].getHeight();
+	width  = sequence[0]->getWidth();
+	height = sequence[0]->getHeight();
 
 }
 
@@ -235,7 +235,7 @@ bool ofxImageSequence::preloadAllFilenames()
 	for(int i = 0; i < numFiles; i++) {
 
         filenames.push_back(dir.getPath(i));
-		sequence.push_back(ofPixels());
+		sequence.push_back(new ofTexture());
 		loadFailed.push_back(false);
     }
 	return true;
@@ -303,10 +303,7 @@ void ofxImageSequence::preloadAllFrames()
 			ofSleepMillis(15);
 		}
 		curLoadFrame = i;
-		if(!ofLoadImage(sequence[i], filenames[i])){
-			loadFailed[i] = true;
-			ofLogError("ofxImageSequence::loadFrame") << "Image failed to load: " << filenames[i];		
-		}
+		loadFrame(curLoadFrame);
 	}
 }
 
@@ -331,8 +328,8 @@ void ofxImageSequence::loadFrame(int imageIndex)
 		return;
 	}
 
-	if(!sequence[imageIndex].isAllocated() && !loadFailed[imageIndex]){
-		if(!ofLoadImage(sequence[imageIndex], filenames[imageIndex])){
+	if(!sequence[imageIndex]->isAllocated() && !loadFailed[imageIndex]){
+		if(!ofLoadImage(*sequence[imageIndex], filenames[imageIndex])){
 			loadFailed[imageIndex] = true;
 			ofLogError("ofxImageSequence::loadFrame") << "Image failed to load: " << filenames[imageIndex];
 		}
@@ -341,8 +338,6 @@ void ofxImageSequence::loadFrame(int imageIndex)
 	if(loadFailed[imageIndex]){
 		return;
 	}
-
-	texture.loadData(sequence[imageIndex]);
 
 	lastFrameLoaded = imageIndex;
 
@@ -432,19 +427,18 @@ ofTexture* ofxImageSequence::getFrame(int index)
 
 ofTexture& ofxImageSequence::getTextureForFrame(int index)
 {
-	setFrame(index);
-	return getTexture();
+	return *sequence[index];
 }
 
 ofTexture& ofxImageSequence::getTextureForTime(float time)
 {
-	setFrameForTime(time);
-	return getTexture();
+	float totalTime = sequence.size() / frameRate;
+	float percent = time / totalTime;
+	return getTextureForPercent(percent);
 }
 
 ofTexture& ofxImageSequence::getTextureForPercent(float percent){
-	setFrameAtPercent(percent);
-	return getTexture();
+	return *sequence[getFrameIndexAtPercent(percent)];
 }
 
 void ofxImageSequence::setFrame(int index)
@@ -479,12 +473,12 @@ void ofxImageSequence::setFrameAtPercent(float percent)
 
 ofTexture& ofxImageSequence::getTexture()
 {
-	return texture;
+	return *sequence[currentFrame];
 }
 
 const ofTexture& ofxImageSequence::getTexture() const
 {
-	return texture;
+	return *sequence[currentFrame];
 }
 
 float ofxImageSequence::getLengthInSeconds()
